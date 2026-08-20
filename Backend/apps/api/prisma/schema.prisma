@@ -1,0 +1,213 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum GroupRole {
+  OWNER
+  MEMBER
+}
+
+enum RecurrenceUnit {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model User {
+  id                  String               @id @default(uuid())
+  email               String               @unique
+  passwordHash        String
+  displayName         String
+  createdAt           DateTime             @default(now())
+  categories          Category[]
+  budgets             Budget[]
+  expenses            Expense[]
+  groupMembers        GroupMember[]
+  processedOperations ProcessedOperation[]
+  recurringExpenses   RecurringExpense[]
+  notificationJobs    NotificationJob[]
+}
+
+model Category {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  name      String
+  icon      String?
+  color     String?
+  version   Int       @default(1)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  budgets   Budget[]
+  expenses  Expense[]
+
+  @@index([userId, updatedAt])
+}
+
+model Budget {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id])
+  month      String
+  limitMinor Int
+  version    Int       @default(1)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+
+  @@index([userId, updatedAt])
+}
+
+model ExpenseGroup {
+  id          String        @id @default(uuid())
+  name        String
+  createdBy   String
+  version     Int           @default(1)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
+  members     GroupMember[]
+  expenses    Expense[]
+  settlements Settlement[]
+
+  @@index([createdBy, updatedAt])
+}
+
+model GroupMember {
+  id       String       @id @default(uuid())
+  groupId  String
+  group    ExpenseGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User         @relation(fields: [userId], references: [id])
+  role     GroupRole    @default(MEMBER)
+  joinedAt DateTime     @default(now())
+
+  @@unique([groupId, userId])
+}
+
+model Expense {
+  id                 String            @id @default(uuid())
+  userId             String
+  user               User              @relation(fields: [userId], references: [id])
+  categoryId         String?
+  category           Category?         @relation(fields: [categoryId], references: [id])
+  groupId            String?
+  group              ExpenseGroup?     @relation(fields: [groupId], references: [id])
+  amountMinor        Int
+  currency           String            @default("PKR")
+  description        String?
+  expenseDate        DateTime
+  receipt            Receipt?
+  isRecurring        Boolean           @default(false)
+  recurringExpenseId String?
+  recurringExpense   RecurringExpense? @relation(fields: [recurringExpenseId], references: [id])
+  version            Int               @default(1)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  deletedAt          DateTime?
+  shares             ExpenseShare[]
+
+  @@index([userId, updatedAt])
+}
+
+model ExpenseShare {
+  id         String    @id @default(uuid())
+  expenseId  String
+  expense    Expense   @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  userId     String
+  shareMinor Int
+  settled    Boolean   @default(false)
+  settledAt  DateTime?
+
+  @@unique([expenseId, userId])
+}
+
+model Settlement {
+  id          String       @id @default(uuid())
+  groupId     String
+  group       ExpenseGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  fromUserId  String
+  toUserId    String
+  amountMinor Int
+  note        String?
+  settledAt   DateTime?
+  version     Int          @default(1)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+
+  @@index([fromUserId, updatedAt])
+  @@index([toUserId, updatedAt])
+}
+
+model ProcessedOperation {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  operationId   String
+  entityType    String
+  entityId      String
+  appliedAt     DateTime @default(now())
+  resultVersion Int
+
+  @@unique([userId, operationId])
+  @@index([userId, entityType, entityId])
+}
+
+model Receipt {
+  id         String   @id @default(uuid())
+  expenseId  String   @unique
+  expense    Expense  @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  imageUrl   String?
+  uploadedAt DateTime @default(now())
+}
+
+model RecurringExpense {
+  id                String         @id @default(uuid())
+  userId            String
+  user              User           @relation(fields: [userId], references: [id])
+  amountMinor       Int
+  currency          String         @default("PKR")
+  description       String?
+  categoryId        String?
+  groupId           String?
+  recurrenceUnit    RecurrenceUnit
+  nextRunAt         DateTime
+  active            Boolean        @default(true)
+  version           Int            @default(1)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  deletedAt         DateTime?
+  generatedExpenses Expense[]
+
+  @@index([userId, updatedAt])
+}
+
+model NotificationJob {
+  id           String             @id @default(uuid())
+  userId       String
+  user         User               @relation(fields: [userId], references: [id])
+  type         String
+  payload      String
+  scheduledFor DateTime
+  status       NotificationStatus @default(PENDING)
+  sentAt       DateTime?
+  createdAt    DateTime           @default(now())
+}

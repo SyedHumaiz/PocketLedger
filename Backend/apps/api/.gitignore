@@ -1,0 +1,15 @@
+# node.js
+node_modules/
+dist/
+coverage/
+
+# env files
+.env
+.env.production
+.env.local
+
+# IDE & OS
+.DS_Store
+.idea/
+.vscode/
+*.log
