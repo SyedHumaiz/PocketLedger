@@ -1,0 +1,14 @@
+# Dependencies and build output
+**/node_modules/
+**/dist/
+**/.expo/
+**/.expo-shared/
+
+# Environment files
+**/.env
+!**/.env.example
+
+# Logs and local OS files
+*.log
+.DS_Store
+Thumbs.db

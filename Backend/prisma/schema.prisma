@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String     @id @default(uuid()) @db.Uuid
+  email           String     @unique @db.VarChar(320)
+  normalizedEmail String     @unique @db.VarChar(320)
+  name            String     @db.VarChar(100)
+  passwordHash    String
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  categories      Category[] @relation("UserCategories")
+  expenses        Expense[]  @relation("UserExpenses")
+  budgets         Budget[]   @relation("UserBudgets")
+
+  @@index([updatedAt])
+}
+
+model Category {
+  id             String    @id @default(uuid()) @db.Uuid
+  userId         String    @db.Uuid
+  name           String    @db.VarChar(100)
+  normalizedName String    @db.VarChar(100)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  user           User      @relation("UserCategories", fields: [userId], references: [id], onDelete: Cascade)
+  expenses       Expense[] @relation("CategoryExpenses")
+  budgets        Budget[]  @relation("CategoryBudgets")
+
+  @@unique([userId, normalizedName])
+  @@index([userId])
+  @@index([updatedAt])
+}
+
+model Expense {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @db.Uuid
+  categoryId  String    @db.Uuid
+  amountMinor Int
+  currency    String    @db.VarChar(3)
+  description String
+  expenseDate DateTime  @db.Date
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  version     Int       @default(1)
+  deletedAt   DateTime?
+  user        User      @relation("UserExpenses", fields: [userId], references: [id], onDelete: Cascade)
+  category    Category  @relation("CategoryExpenses", fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+  @@index([categoryId])
+  @@index([expenseDate])
+  @@index([updatedAt])
+}
+
+model Budget {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @db.Uuid
+  categoryId  String?   @db.Uuid
+  amountMinor Int
+  month       Int
+  year        Int
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation("UserBudgets", fields: [userId], references: [id], onDelete: Cascade)
+  category    Category? @relation("CategoryBudgets", fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, categoryId, month, year])
+  @@index([userId])
+  @@index([categoryId])
+  @@index([updatedAt])
+}
+
+// Ownership checks are mandatory in the service layer: before creating or
+// updating an Expense or Budget, verify that its Category belongs to the
+// authenticated user. Foreign keys do not establish that cross-relation.
