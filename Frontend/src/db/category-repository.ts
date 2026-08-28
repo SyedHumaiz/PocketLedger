@@ -1,0 +1,6 @@
+import type { SQLiteDatabase } from 'expo-sqlite';
+import type { LocalCategoryRecord } from './types';
+
+export const listLocalCategories=(db:SQLiteDatabase,userId:string)=>db.getAllAsync<LocalCategoryRecord>('SELECT * FROM categories WHERE userId=? AND deletedAt IS NULL ORDER BY name ASC',userId);
+export const getLocalCategoryById=(db:SQLiteDatabase,userId:string,id:string)=>db.getFirstAsync<LocalCategoryRecord>('SELECT * FROM categories WHERE id=? AND userId=?',id,userId);
+export async function upsertLocalCategories(db:SQLiteDatabase,userId:string,categories:readonly LocalCategoryRecord[]):Promise<void>{for(const category of categories){if(category.userId!==userId)throw new Error('Category user scope mismatch.');await db.runAsync('INSERT INTO categories (id,userId,name,normalizedName,createdAt,updatedAt,deletedAt,syncStatus) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,normalizedName=excluded.normalizedName,createdAt=excluded.createdAt,updatedAt=excluded.updatedAt,deletedAt=excluded.deletedAt,syncStatus=excluded.syncStatus WHERE categories.userId=excluded.userId',category.id,category.userId,category.name,category.normalizedName,category.createdAt,category.updatedAt,category.deletedAt,category.syncStatus);}}

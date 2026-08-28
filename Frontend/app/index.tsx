@@ -1,5 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import { Button, StyleSheet, Text, TextInput, View } from 'react-native';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { useAuthStore } from '../src/auth/auth-store';
 
@@ -7,7 +8,7 @@ export default function HomeScreen(): React.ReactElement {
   const { user, isLoading, isAuthenticated, error, login, register, logout } = useAuthStore();
   const [email,setEmail]=useState(''); const [password,setPassword]=useState(''); const [name,setName]=useState('');
   if(isLoading)return <View style={styles.container}><Text>Restoring session…</Text></View>;
-  if(isAuthenticated&&user)return <View style={styles.container}><Text style={styles.title}>PocketLedger</Text><Text>{user.name}</Text><Text>{user.email}</Text><Button title="Log out" onPress={()=>void logout()}/><StatusBar style="auto"/></View>;
+  if(isAuthenticated&&user)return <View style={styles.container}><Text style={styles.title}>PocketLedger</Text><Text>{user.name}</Text><Text>{user.email}</Text><Button title="View expenses" onPress={()=>router.push('/expenses')}/><Button title="Log out" onPress={()=>void logout()}/><StatusBar style="auto"/></View>;
   return (
     <View style={styles.container}>
       <Text style={styles.title}>PocketLedger</Text>
