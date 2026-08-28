@@ -38,12 +38,17 @@ In a separate terminal:
 
 ```powershell
 cd Frontend
+Copy-Item .env.example .env
 npm install
 npm run start
 ```
 
-Use Expo Go or an Android/iOS simulator to open the app. Run the static type
-check with `npm run typecheck`.
+Use Expo Go or an Android/iOS simulator to open the app. On a physical device,
+set `EXPO_PUBLIC_API_URL` to your computer's LAN IPv4 address (for example
+`http://192.168.1.20:3000`), not `localhost`. The local SQLite
+foundation uses `expo-sqlite` and initializes when its database module is
+opened. Run `npm run typecheck` and `npm test`; native SQLite execution is
+validated on an Expo device or emulator rather than Node.
 
 ## Current scope
 

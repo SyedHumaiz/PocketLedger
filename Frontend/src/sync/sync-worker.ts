@@ -1,0 +1,29 @@
+import { api, toApiError } from '../api/client';
+import { useAuthStore } from '../auth/auth-store';
+import { tokenStorage } from '../auth/token-storage';
+import { getDatabase } from '../db/database';
+import { getExpenseById } from '../db/expense-repository';
+import { completeExpenseSyncOperation, listDueSyncOperations, markExpenseSyncConflict, markSyncOperationFailed, markSyncOperationProcessing, recoverStaleProcessingOperations, releaseSyncOperationClaim } from '../db/sync-queue-repository';
+import { isRetryableSyncError, type SyncFailure } from '../db/sync-queue-state';
+import type { LocalExpenseRecord, SyncOperationType, SyncQueueRecord } from '../db/types';
+
+const STALE_PROCESSING_MS=5*60_000;
+type ServerExpense={id:string;userId?:string;categoryId:string|null;amountMinor:number;currency:string;description:string;expenseDate:string;createdAt:string;updatedAt:string;version:number;deletedAt:string|null;};
+type SyncResponse={status:'APPLIED'|'CONFLICT';expense:ServerExpense;};
+type AuthSnapshot={isAuthenticated:boolean;user:{id:string}|null};
+type ApiClient={post<T>(url:string,data:unknown):Promise<{data:T}>};
+
+export interface SyncWorkerDependencies { getDatabase:typeof getDatabase; getAuthState:()=>AuthSnapshot; getToken:()=>Promise<string|null>; api:ApiClient; listDue:typeof listDueSyncOperations; recoverStale:typeof recoverStaleProcessingOperations; claim:typeof markSyncOperationProcessing; releaseClaim:typeof releaseSyncOperationClaim; getExpense:typeof getExpenseById; complete:typeof completeExpenseSyncOperation; fail:typeof markSyncOperationFailed; conflict:typeof markExpenseSyncConflict; now:()=>Date; createId:()=>string; }
+const productionDependencies:SyncWorkerDependencies={getDatabase,getAuthState:()=>useAuthStore.getState(),getToken:()=>tokenStorage.get(),api,listDue:listDueSyncOperations,recoverStale:recoverStaleProcessingOperations,claim:markSyncOperationProcessing,releaseClaim:releaseSyncOperationClaim,getExpense:getExpenseById,complete:completeExpenseSyncOperation,fail:markSyncOperationFailed,conflict:markExpenseSyncConflict,now:()=>new Date(),createId:()=>globalThis.crypto.randomUUID()};
+
+export function createSyncWorker(dependencies:SyncWorkerDependencies){let active=false;return {isActive:()=>active,async syncPendingOperations():Promise<void>{if(active)return;active=true;try{const auth=dependencies.getAuthState();if(!auth.isAuthenticated||!auth.user||!await dependencies.getToken())return;const db=await dependencies.getDatabase();const now=dependencies.now();await dependencies.recoverStale(db,new Date(now.getTime()-STALE_PROCESSING_MS).toISOString(),now.toISOString());while(true){const [operation]=await dependencies.listDue(db,dependencies.now().toISOString(),1);if(!operation)return;if(!await dependencies.claim(db,operation,dependencies.now()))continue;const result=await processOperation(dependencies,db,operation);if(result==='UNAUTHORIZED')return;}}finally{active=false;}}};}
+
+async function processOperation(dependencies:SyncWorkerDependencies,db:Awaited<ReturnType<typeof getDatabase>>,operation:SyncQueueRecord):Promise<'CONTINUE'|'UNAUTHORIZED'>{const localExpense=await dependencies.getExpense(db,operation.entityId);try{const request=buildRequest(operation,localExpense);const {data}=await dependencies.api.post<SyncResponse>('/sync/expenses',request);if(data.status==='CONFLICT'){await dependencies.conflict(db,operation,localExpense,data.expense,dependencies.createId(),dependencies.now().toISOString());return 'CONTINUE';}await dependencies.complete(db,operation,toLocalExpense(data.expense,localExpense));return 'CONTINUE';}catch(error){const apiError=toApiError(error);if(apiError.status===401){await dependencies.releaseClaim(db,operation,dependencies.now().toISOString());return 'UNAUTHORIZED';}const failure:SyncFailure={message:safeErrorMessage(apiError.message),statusCode:apiError.status??undefined};await dependencies.fail(db,operation,failure,isRetryableSyncError(failure),dependencies.now());return 'CONTINUE';}}
+
+function buildRequest(operation:SyncQueueRecord,localExpense:LocalExpenseRecord|null):{operationId:string;operationType:SyncOperationType;entityId:string;payload:Record<string,unknown>;baseVersion?:number}{let parsed:unknown;try{parsed=JSON.parse(operation.payloadJson);}catch{throw {response:{status:400,data:{message:'Invalid queued operation.'}}};}if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw {response:{status:400,data:{message:'Invalid queued operation.'}}};const {baseVersion,...payload}=parsed as Record<string,unknown>;const request={operationId:operation.operationId,operationType:operation.operationType,entityId:operation.entityId,payload};if(operation.operationType!=='CREATE'){const version=typeof baseVersion==='number'?baseVersion:localExpense?localExpense.version-1:undefined;if(version===undefined||!Number.isInteger(version)||version<1)throw {response:{status:400,data:{message:'Missing base version.'}}};return {...request,baseVersion:version};}return request;}
+function toLocalExpense(server:ServerExpense,local:LocalExpenseRecord|null):LocalExpenseRecord{if(!local)throw new Error('Local expense not found during reconciliation.');return {id:server.id,userId:server.userId??local.userId,categoryId:server.categoryId,amountMinor:server.amountMinor,currency:server.currency,description:server.description,expenseDate:server.expenseDate.slice(0,10),createdAt:server.createdAt,updatedAt:server.updatedAt,version:server.version,deletedAt:server.deletedAt,syncStatus:'SYNCED'};}
+function safeErrorMessage(message:string):string{return message.replace(/[\r\n]+/g,' ').slice(0,500)||'Sync request failed.';}
+
+const defaultWorker=createSyncWorker(productionDependencies);
+export const syncPendingOperations=()=>defaultWorker.syncPendingOperations();
+export const isSyncRunActive=()=>defaultWorker.isActive();

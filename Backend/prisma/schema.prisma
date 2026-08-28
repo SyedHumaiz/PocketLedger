@@ -8,18 +8,36 @@ datasource db {
 }
 
 model User {
-  id              String     @id @default(uuid()) @db.Uuid
-  email           String     @unique @db.VarChar(320)
-  normalizedEmail String     @unique @db.VarChar(320)
-  name            String     @db.VarChar(100)
-  passwordHash    String
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
-  categories      Category[] @relation("UserCategories")
-  expenses        Expense[]  @relation("UserExpenses")
-  budgets         Budget[]   @relation("UserBudgets")
+  id                  String               @id @default(uuid()) @db.Uuid
+  email               String               @unique @db.VarChar(320)
+  normalizedEmail     String               @unique @db.VarChar(320)
+  name                String               @db.VarChar(100)
+  passwordHash        String
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  categories          Category[]           @relation("UserCategories")
+  expenses            Expense[]            @relation("UserExpenses")
+  budgets             Budget[]             @relation("UserBudgets")
+  processedOperations ProcessedOperation[] @relation("UserProcessedOperations")
 
   @@index([updatedAt])
+}
+
+model ProcessedOperation {
+  id            String   @id @default(uuid()) @db.Uuid
+  operationId   String   @db.Uuid
+  userId        String   @db.Uuid
+  entityType    String
+  entityId      String   @db.Uuid
+  operationType String
+  requestHash   String
+  resultJson    String
+  createdAt     DateTime @default(now())
+  user          User     @relation("UserProcessedOperations", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, operationId])
+  @@index([userId, entityType, entityId])
+  @@index([createdAt])
 }
 
 model Category {
