@@ -71,7 +71,9 @@ model Budget {
   user        User      @relation("UserBudgets", fields: [userId], references: [id], onDelete: Cascade)
   category    Category? @relation("CategoryBudgets", fields: [categoryId], references: [id], onDelete: Restrict)
 
-  @@unique([userId, categoryId, month, year])
+  // PostgreSQL partial unique indexes in the fix_budget_uniqueness migration
+  // enforce one overall (NULL category) and one category-specific budget per
+  // user/month/year. Prisma schema syntax cannot represent partial indexes.
   @@index([userId])
   @@index([categoryId])
   @@index([updatedAt])

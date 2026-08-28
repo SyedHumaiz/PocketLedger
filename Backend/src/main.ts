@@ -2,8 +2,12 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 
 import { AppModule } from './app.module';
+import { getJwtConfiguration } from './auth/auth.config';
 
 async function bootstrap(): Promise<void> {
+  process.loadEnvFile();
+  getJwtConfiguration();
+
   const app = await NestFactory.create(AppModule);
 
   app.useGlobalPipes(
