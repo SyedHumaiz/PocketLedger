@@ -1,0 +1,1 @@
+export function validateCategoryName(value:string):{value:string;error:string|null}{const trimmed=value.trim();if(!trimmed)return {value:trimmed,error:'Enter a category name.'};if(trimmed.length>100)return {value:trimmed,error:'Category names must be 100 characters or fewer.'};return {value:trimmed,error:null};}

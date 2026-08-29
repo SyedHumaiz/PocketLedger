@@ -16,7 +16,7 @@ export class ExpensesService {
 
   findAll(userId: string) {
     return this.prisma.expense.findMany({
-      where: { userId, deletedAt: null },
+      where: { userId, groupId: null, deletedAt: null },
       orderBy: [{ expenseDate: 'desc' }, { createdAt: 'desc' }],
       include: { category: { select: safeCategorySelection } },
     });
@@ -24,7 +24,7 @@ export class ExpensesService {
 
   async findOne(userId: string, id: string) {
     const expense = await this.prisma.expense.findFirst({
-      where: { id, userId, deletedAt: null },
+      where: { id, userId, groupId: null, deletedAt: null },
       include: { category: { select: safeCategorySelection } },
     });
 
@@ -41,6 +41,7 @@ export class ExpensesService {
     return this.prisma.expense.create({
       data: {
         userId,
+        paidByUserId: userId,
         categoryId: dto.categoryId,
         amountMinor: dto.amountMinor,
         currency: dto.currency,
@@ -96,7 +97,7 @@ export class ExpensesService {
 
   async remove(userId: string, id: string) {
     const expense = await this.prisma.expense.findFirst({
-      where: { id, userId },
+      where: { id, userId, groupId: null },
     });
 
     if (!expense) {

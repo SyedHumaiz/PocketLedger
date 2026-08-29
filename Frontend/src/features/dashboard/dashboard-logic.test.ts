@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { dashboardViewModel, monthlySpendingTotal, pendingSyncCount, selectRecentExpenses } from './dashboard-logic';
+import type { LocalExpenseRecord, SyncQueueRecord } from '../../db/types';
+const expense=(id:string,date:string,amountMinor:number):LocalExpenseRecord=>({id,userId:'u',categoryId:null,amountMinor,currency:'USD',description:id,expenseDate:date,createdAt:`${date}T10:00:00Z`,updatedAt:'',version:1,deletedAt:null,syncStatus:'SYNCED'});
+const queue=(status:SyncQueueRecord['status']):SyncQueueRecord=>({operationId:status,entityType:'expense',entityId:'e',operationType:'CREATE',payloadJson:'{}',attempts:0,status,lastError:null,nextAttemptAt:null,createdAt:'',updatedAt:''});
+test('calculates monthly spending from local expenses only',()=>assert.equal(monthlySpendingTotal([expense('a','2026-08-02',1250),expense('b','2026-07-31',900)],new Date('2026-08-20T12:00:00Z')),1250));
+test('selects latest local expenses',()=>assert.deepEqual(selectRecentExpenses([expense('old','2026-08-01',1),expense('new','2026-08-19',1)]).map(x=>x.id),['new','old']));
+test('counts all unsynced queue states',()=>assert.equal(pendingSyncCount([queue('PENDING'),queue('PROCESSING'),queue('FAILED'),queue('SYNCED'),queue('CONFLICT')]),3));
+test('maps dashboard values',()=>{const view=dashboardViewModel([expense('a','2026-08-02',550)],[queue('PENDING')],new Date('2026-08-20T12:00:00Z'));assert.deepEqual({monthTotal:view.monthTotal,monthExpenseCount:view.monthExpenseCount,pendingCount:view.pendingCount},{monthTotal:'USD 5.50',monthExpenseCount:1,pendingCount:1});});

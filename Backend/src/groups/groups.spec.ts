@@ -1,0 +1,28 @@
+import type { INestApplication } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { GroupRole } from '@prisma/client';
+import { Test } from '@nestjs/testing';
+import * as request from 'supertest';
+import { AppModule } from '../app.module';
+import { PrismaService } from '../prisma/prisma.service';
+
+const ownerId='11111111-1111-4111-8111-111111111111';
+const memberId='22222222-2222-4222-8222-222222222222';
+const outsiderId='33333333-3333-4333-8333-333333333333';
+describe('GroupsController',()=>{
+  let app:INestApplication; let jwt:JwtService;
+  let groups:any[]=[]; let members:any[]=[];
+  const users=[{id:ownerId,name:'Owner',email:'owner@example.test',normalizedEmail:'owner@example.test'},{id:memberId,name:'Member',email:'member@example.test',normalizedEmail:'member@example.test'}];
+  const prismaMock:any={user:{findUnique:jest.fn()},expenseGroup:{create:jest.fn(),findMany:jest.fn(),findUnique:jest.fn()},groupMember:{findUnique:jest.fn(),create:jest.fn(),delete:jest.fn()}};
+  const auth=(id:string)=>`Bearer ${jwt.sign({sub:id,email:`${id}@example.test`})}`;
+  beforeAll(async()=>{process.env.JWT_SECRET='z8Vf3mQ7rL1xC9nK4pT6wY2hD5sA0uE8bG3jR7qM1vX9cF4';process.env.JWT_EXPIRES_IN='15m';const ref=await Test.createTestingModule({imports:[AppModule]}).overrideProvider(PrismaService).useValue(prismaMock).compile();app=ref.createNestApplication();app.useGlobalPipes(new ValidationPipe({whitelist:true,forbidNonWhitelisted:true,transform:true}));await app.init();jwt=app.get(JwtService);});
+  beforeEach(()=>{groups=[];members=[];jest.clearAllMocks();prismaMock.user.findUnique.mockImplementation(async({where}:any)=>users.find(u=>u.normalizedEmail===where.normalizedEmail)||null);prismaMock.groupMember.findUnique.mockImplementation(async({where}:any)=>members.find(m=>m.groupId===where.groupId_userId.groupId&&m.userId===where.groupId_userId.userId)||null);prismaMock.groupMember.create.mockImplementation(async({data}:any)=>{const row={...data,joinedAt:new Date('2026-08-30')};members.push(row);const user=users.find(u=>u.id===data.userId)!;return {role:row.role,joinedAt:row.joinedAt,user:{id:user.id,name:user.name,email:user.email}};});prismaMock.groupMember.delete.mockImplementation(async({where}:any)=>{members=members.filter(m=>!(m.groupId===where.groupId_userId.groupId&&m.userId===where.groupId_userId.userId));return {};});prismaMock.expenseGroup.create.mockImplementation(async({data}:any)=>{const group={id:`00000000-0000-4000-8000-${String(groups.length+1).padStart(12,'0')}`,name:data.name,createdById:data.createdById,createdAt:new Date('2026-08-30'),updatedAt:new Date('2026-08-30')};groups.push(group);members.push({groupId:group.id,userId:data.members.create.userId,role:data.members.create.role,joinedAt:group.createdAt});return {...group,_count:{members:1}};});prismaMock.expenseGroup.findMany.mockImplementation(async({where}:any)=>groups.filter(g=>members.some(m=>m.groupId===g.id&&m.userId===where.members.some.userId)).map(g=>({...g,_count:{members:members.filter(m=>m.groupId===g.id).length}})));prismaMock.expenseGroup.findUnique.mockImplementation(async({where}:any)=>{const group=groups.find(g=>g.id===where.id);if(!group)return null;return {...group,members:members.filter(m=>m.groupId===group.id).map(m=>{const u=users.find(x=>x.id===m.userId)!;return {role:m.role,joinedAt:m.joinedAt,user:{id:u.id,name:u.name,email:u.email}};})};});});
+  afterAll(async()=>{if(app)await app.close();});
+  const create=()=>request(app.getHttpServer()).post('/groups').set('Authorization',auth(ownerId)).send({name:'  Weekend trip  '});
+  it('creates a group with the creator as its owner member',async()=>{const res=await create().expect(201);expect(res.body).toMatchObject({name:'Weekend trip',createdById:ownerId,_count:{members:1}});expect(members[0]).toMatchObject({userId:ownerId,role:GroupRole.OWNER});});
+  it('isolates group lists by membership',async()=>{await create();await request(app.getHttpServer()).get('/groups').set('Authorization',auth(outsiderId)).expect([]);await request(app.getHttpServer()).get('/groups').set('Authorization',auth(ownerId)).expect(200).expect(res=>expect(res.body).toHaveLength(1));});
+  it('allows members but not outsiders to read a group',async()=>{const group=(await create()).body;members.push({groupId:group.id,userId:memberId,role:GroupRole.MEMBER,joinedAt:new Date()});await request(app.getHttpServer()).get(`/groups/${group.id}`).set('Authorization',auth(memberId)).expect(200);await request(app.getHttpServer()).get(`/groups/${group.id}`).set('Authorization',auth(outsiderId)).expect(404);});
+  it('enforces owner-only member management and rejects unknown, duplicate, and owner removal',async()=>{const group=(await create()).body;await request(app.getHttpServer()).post(`/groups/${group.id}/members`).set('Authorization',auth(ownerId)).send({email:'missing@example.test'}).expect(404);await request(app.getHttpServer()).post(`/groups/${group.id}/members`).set('Authorization',auth(ownerId)).send({email:' MEMBER@EXAMPLE.TEST '}).expect(201);await request(app.getHttpServer()).post(`/groups/${group.id}/members`).set('Authorization',auth(ownerId)).send({email:'member@example.test'}).expect(409);await request(app.getHttpServer()).post(`/groups/${group.id}/members`).set('Authorization',auth(memberId)).send({email:'owner@example.test'}).expect(403);await request(app.getHttpServer()).delete(`/groups/${group.id}/members/${ownerId}`).set('Authorization',auth(ownerId)).expect(403);});
+  it('rejects unauthenticated group requests',async()=>{await request(app.getHttpServer()).get('/groups').expect(401);});
+});

@@ -1,0 +1,8 @@
+import type { LocalBudgetRecord, LocalExpenseRecord } from '../../db/types';
+export const expensesForPeriod=(expenses:readonly LocalExpenseRecord[],month:number,year:number)=>expenses.filter(item=>item.expenseDate===`${year}-${String(month).padStart(2,'0')}` || item.expenseDate.startsWith(`${year}-${String(month).padStart(2,'0')}-`));
+export const spendingForBudget=(budget:LocalBudgetRecord,expenses:readonly LocalExpenseRecord[])=>expensesForPeriod(expenses,budget.month,budget.year).filter(item=>budget.categoryId===null||item.categoryId===budget.categoryId).reduce((sum,item)=>sum+item.amountMinor,0);
+export const remainingAmount=(amountMinor:number,spentMinor:number)=>amountMinor-spentMinor;
+export const budgetProgress=(amountMinor:number,spentMinor:number)=>amountMinor===0?0:Math.round((spentMinor/amountMinor)*100);
+export const isOverBudget=(amountMinor:number,spentMinor:number)=>spentMinor>amountMinor;
+export const budgetsForPeriod=(budgets:readonly LocalBudgetRecord[],month:number,year:number)=>budgets.filter(item=>item.month===month&&item.year===year);
+export function budgetSummary(budgets:readonly LocalBudgetRecord[],expenses:readonly LocalExpenseRecord[],month:number,year:number){const filtered=budgetsForPeriod(budgets,month,year);const overall=filtered.find(item=>item.categoryId===null);const spent=expensesForPeriod(expenses,month,year).reduce((sum,item)=>sum+item.amountMinor,0);const totalBudget=overall?.amountMinor??filtered.reduce((sum,item)=>sum+item.amountMinor,0);return {spentMinor:spent,totalBudgetMinor:totalBudget,remainingMinor:remainingAmount(totalBudget,spent),progress:budgetProgress(totalBudget,spent),overBudget:isOverBudget(totalBudget,spent)};}

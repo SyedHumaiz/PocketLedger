@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { useAuthStore } from '../src/auth/auth-store';
 import { useSyncConnectivity } from '../src/sync/sync-connectivity';
 import { useCategoryCache } from '../src/sync/category-cache';
+import { useBudgetCache } from '../src/sync/budget-cache';
 
 export default function RootLayout(): React.ReactElement {
   const restore = useAuthStore((state) => state.restore);
@@ -12,5 +13,6 @@ export default function RootLayout(): React.ReactElement {
   useEffect(() => { void restore(); }, [restore]);
   useSyncConnectivity(isLoading, isAuthenticated);
   useCategoryCache(isLoading, isAuthenticated, userId);
+  useBudgetCache(isLoading, isAuthenticated, userId);
   return <Stack screenOptions={{ headerShown: false }} />;
 }

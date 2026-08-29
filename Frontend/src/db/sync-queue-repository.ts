@@ -13,6 +13,7 @@ export async function enqueueSyncOperation(db:SQLiteDatabase,input:EnqueueSyncOp
 
 export function listDueSyncOperations(db:SQLiteDatabase,now:string=new Date().toISOString(),limit:number=50):Promise<SyncQueueRecord[]>{return db.getAllAsync<SyncQueueRecord>('SELECT * FROM sync_queue WHERE status=? AND (nextAttemptAt IS NULL OR nextAttemptAt<=?) ORDER BY createdAt ASC LIMIT ?', 'PENDING',now,limit);}
 export const getSyncOperation=(db:SQLiteDatabase,operationId:string)=>db.getFirstAsync<SyncQueueRecord>('SELECT * FROM sync_queue WHERE operationId=?',operationId);
+export const listSyncOperations=(db:SQLiteDatabase)=>db.getAllAsync<SyncQueueRecord>('SELECT * FROM sync_queue ORDER BY createdAt DESC');
 
 export async function markSyncOperationProcessing(db:SQLiteDatabase,record:SyncQueueRecord,now:Date=new Date()):Promise<boolean>{return updateTransition(db,record,'START',now);}
 export async function markSyncOperationSucceeded(db:SQLiteDatabase,record:SyncQueueRecord,now:Date=new Date()):Promise<boolean>{return updateTransition(db,record,'SUCCEED',now);}

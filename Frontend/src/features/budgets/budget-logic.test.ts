@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { budgetProgress, budgetsForPeriod, isOverBudget, remainingAmount, spendingForBudget } from './budget-logic';
+import type { LocalBudgetRecord, LocalExpenseRecord } from '../../db/types';
+const expense=(date:string,amountMinor:number,categoryId:string|null=null):LocalExpenseRecord=>({id:date+amountMinor,userId:'u',categoryId,amountMinor,currency:'USD',description:'x',expenseDate:date,createdAt:'',updatedAt:'',version:1,deletedAt:null,syncStatus:'SYNCED'});
+const budget=(categoryId:string|null=null):LocalBudgetRecord=>({id:'b',userId:'u',categoryId,amountMinor:1000,month:8,year:2026,createdAt:'',updatedAt:'',deletedAt:null,syncStatus:'SYNCED'});
+test('aggregates monthly spending for overall budgets',()=>assert.equal(spendingForBudget(budget(),[expense('2026-08-01',300),expense('2026-08-02',200),expense('2026-07-31',999)]),500));
+test('aggregates only a budget category',()=>assert.equal(spendingForBudget(budget('food'),[expense('2026-08-01',300,'food'),expense('2026-08-02',200,'travel')]),300));
+test('calculates remaining and over-budget state',()=>{assert.equal(remainingAmount(1000,1200),-200);assert.equal(isOverBudget(1000,1200),true);assert.equal(budgetProgress(1000,500),50);});
+test('filters budgets by selected month and year',()=>assert.deepEqual(budgetsForPeriod([budget(),{...budget(),id:'other',month:9}],8,2026).map(item=>item.id),['b']));

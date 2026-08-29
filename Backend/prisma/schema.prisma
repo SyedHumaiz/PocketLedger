@@ -17,8 +17,14 @@ model User {
   updatedAt           DateTime             @updatedAt
   categories          Category[]           @relation("UserCategories")
   expenses            Expense[]            @relation("UserExpenses")
+  paidExpenses        Expense[]            @relation("ExpensePayer")
   budgets             Budget[]             @relation("UserBudgets")
   processedOperations ProcessedOperation[] @relation("UserProcessedOperations")
+  createdGroups       ExpenseGroup[]       @relation("GroupCreator")
+  groupMemberships    GroupMember[]        @relation("GroupMemberUser")
+  expenseShares       ExpenseShare[]       @relation("ExpenseShareUser")
+  settlementsSent     Settlement[]         @relation("SettlementFromUser")
+  settlementsReceived Settlement[]         @relation("SettlementToUser")
 
   @@index([updatedAt])
 }
@@ -57,24 +63,95 @@ model Category {
 }
 
 model Expense {
-  id          String    @id @default(uuid()) @db.Uuid
-  userId      String    @db.Uuid
-  categoryId  String    @db.Uuid
-  amountMinor Int
-  currency    String    @db.VarChar(3)
-  description String
-  expenseDate DateTime  @db.Date
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  version     Int       @default(1)
-  deletedAt   DateTime?
-  user        User      @relation("UserExpenses", fields: [userId], references: [id], onDelete: Cascade)
-  category    Category  @relation("CategoryExpenses", fields: [categoryId], references: [id], onDelete: Restrict)
+  id           String         @id @default(uuid()) @db.Uuid
+  userId       String         @db.Uuid
+  paidByUserId String         @db.Uuid
+  categoryId   String         @db.Uuid
+  groupId      String?        @db.Uuid
+  amountMinor  Int
+  currency     String         @db.VarChar(3)
+  description  String
+  expenseDate  DateTime       @db.Date
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  version      Int            @default(1)
+  deletedAt    DateTime?
+  user         User           @relation("UserExpenses", fields: [userId], references: [id], onDelete: Cascade)
+  paidByUser   User           @relation("ExpensePayer", fields: [paidByUserId], references: [id], onDelete: Restrict)
+  category     Category       @relation("CategoryExpenses", fields: [categoryId], references: [id], onDelete: Restrict)
+  group        ExpenseGroup?  @relation("GroupExpenses", fields: [groupId], references: [id], onDelete: SetNull)
+  shares       ExpenseShare[] @relation("ExpenseShares")
 
   @@index([userId])
+  @@index([paidByUserId])
   @@index([categoryId])
+  @@index([groupId])
   @@index([expenseDate])
   @@index([updatedAt])
+}
+
+enum GroupRole {
+  OWNER
+  MEMBER
+}
+
+model ExpenseGroup {
+  id          String        @id @default(uuid()) @db.Uuid
+  name        String        @db.VarChar(100)
+  createdById String        @db.Uuid
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  createdBy   User          @relation("GroupCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  members     GroupMember[] @relation("GroupMembers")
+  expenses    Expense[]     @relation("GroupExpenses")
+  settlements Settlement[]  @relation("GroupSettlements")
+
+  @@index([createdById])
+  @@index([updatedAt])
+}
+
+model GroupMember {
+  groupId  String       @db.Uuid
+  userId   String       @db.Uuid
+  role     GroupRole    @default(MEMBER)
+  joinedAt DateTime     @default(now())
+  group    ExpenseGroup @relation("GroupMembers", fields: [groupId], references: [id], onDelete: Cascade)
+  user     User         @relation("GroupMemberUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, userId])
+  @@index([userId])
+  @@index([groupId, role])
+}
+
+model ExpenseShare {
+  id          String   @id @default(uuid()) @db.Uuid
+  expenseId   String   @db.Uuid
+  userId      String   @db.Uuid
+  amountMinor Int
+  createdAt   DateTime @default(now())
+  expense     Expense  @relation("ExpenseShares", fields: [expenseId], references: [id], onDelete: Cascade)
+  user        User     @relation("ExpenseShareUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([expenseId, userId])
+  @@index([userId])
+  @@index([expenseId])
+}
+
+model Settlement {
+  id          String       @id @default(uuid()) @db.Uuid
+  groupId     String       @db.Uuid
+  fromUserId  String       @db.Uuid
+  toUserId    String       @db.Uuid
+  amountMinor Int
+  settledAt   DateTime
+  createdAt   DateTime     @default(now())
+  group       ExpenseGroup @relation("GroupSettlements", fields: [groupId], references: [id], onDelete: Cascade)
+  fromUser    User         @relation("SettlementFromUser", fields: [fromUserId], references: [id], onDelete: Restrict)
+  toUser      User         @relation("SettlementToUser", fields: [toUserId], references: [id], onDelete: Restrict)
+
+  @@index([groupId, settledAt])
+  @@index([fromUserId])
+  @@index([toUserId])
 }
 
 model Budget {

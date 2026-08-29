@@ -212,6 +212,7 @@ describe('ExpensesController', () => {
 
     expect(response.body).toMatchObject({
       userId: firstUserId,
+      paidByUserId: firstUserId,
       categoryId: category.id,
       amountMinor: 1_250,
       description: 'Coffee and breakfast',
