@@ -93,6 +93,44 @@ describe('AuthController', () => {
     expect(users[0]?.passwordHash).not.toBe(testPassword);
   });
 
+  it('accepts the mobile registration payload with a strong password', async () => {
+    await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({
+        name: 'Test User',
+        email: 'testuser@example.com',
+        password: 'PocketLedger@123',
+      })
+      .expect(201);
+  });
+
+  it('accepts a simple six-character password and rejects shorter passwords', async () => {
+    await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({ name: 'Simple Password', email: 'simple@example.com', password: 'simple' })
+      .expect(201);
+
+    const response = await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({ name: 'Short Password', email: 'short@example.com', password: 'short' })
+      .expect(400);
+
+    expect(response.body.message).toContain('password must be longer than or equal to 6 characters');
+  });
+
+  it('returns email validation details when the email contains a backslash', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({
+        name: 'Test User',
+        email: 'testuser\\@example.com',
+        password: testPassword,
+      })
+      .expect(400);
+
+    expect(response.body.message).toContain('email must be an email');
+  });
+
   it('rejects a duplicate normalized email', async () => {
     const payload = {
       name: 'Ada Lovelace',
