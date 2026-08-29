@@ -13,7 +13,7 @@ describe('GroupExpensesService',()=>{
       expense:{create:jest.fn(async({data}:any)=>{order.push('create');return data;}),findFirst:jest.fn(async({where}:any)=>where.groupId===groupId?{id:expenseId,userId:creator,groupId,paidByUserId:member,categoryId,amountMinor:5000}:null),update:jest.fn(async({data}:any)=>{order.push('update');return data;})},
       expenseShare:{deleteMany:jest.fn(async()=>{order.push('deleteShares');return {count:2};})},
     };
-    prisma={$transaction:jest.fn(async(work:any)=>work(tx)),...tx}; service=new GroupExpensesService(prisma);
+    prisma={$transaction:jest.fn(async(work:any)=>work(tx)),...tx}; service=new GroupExpensesService(prisma,{notifySafely:jest.fn()} as any);
   });
   it('creates a valid group expense atomically with route group, creator, payer, and shares',async()=>{const result:any=await service.create(creator,groupId,dto());expect(prisma.$transaction).toHaveBeenCalled();expect(result).toMatchObject({userId:creator,groupId,paidByUserId:member,shares:{create:expect.any(Array)}});});
   it('rejects payer/share membership, duplicates, and mismatched totals before creation',async()=>{await expect(service.create(creator,groupId,dto({paidByUserId:outsider}))).rejects.toBeInstanceOf(BadRequestException);await expect(service.create(creator,groupId,dto({shares:[{userId:outsider,amountMinor:5000}]}))).rejects.toBeInstanceOf(BadRequestException);await expect(service.create(creator,groupId,dto({shares:[{userId:creator,amountMinor:2500},{userId:creator,amountMinor:2500}]}))).rejects.toBeInstanceOf(BadRequestException);await expect(service.create(creator,groupId,dto({shares:[{userId:creator,amountMinor:100}]}))).rejects.toBeInstanceOf(BadRequestException);expect(tx.expense.create).not.toHaveBeenCalled();});

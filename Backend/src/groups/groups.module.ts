@@ -6,5 +6,6 @@ import { GroupExpensesController } from './group-expenses.controller';
 import { GroupExpensesService } from './group-expenses.service';
 import { GroupSettlementsController } from './group-settlements.controller';
 import { GroupSettlementsService } from './group-settlements.service';
-@Module({controllers:[GroupsController,GroupExpensesController,GroupSettlementsController],providers:[GroupsService,GroupExpensesService,GroupSettlementsService,PrismaService]})
+import { NotificationsModule } from '../notifications/notifications.module';
+@Module({imports:[NotificationsModule],controllers:[GroupsController,GroupExpensesController,GroupSettlementsController],providers:[GroupsService,GroupExpensesService,GroupSettlementsService,PrismaService]})
 export class GroupsModule {}
