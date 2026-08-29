@@ -1,0 +1,3 @@
+import { Stack } from 'expo-router';
+import { colors } from '../../../src/ui/theme';
+export default function GroupsLayout():React.ReactElement{return <Stack screenOptions={{headerStyle:{backgroundColor:colors.surface},headerTintColor:colors.text,contentStyle:{backgroundColor:colors.background}}}><Stack.Screen name="index" options={{title:'Groups'}}/><Stack.Screen name="new" options={{title:'New group'}}/><Stack.Screen name="[id]" options={{title:'Group'}}/><Stack.Screen name="expenses/new" options={{title:'Shared expense'}}/><Stack.Screen name="expenses/[expenseId]" options={{title:'Edit shared expense'}}/></Stack>;}

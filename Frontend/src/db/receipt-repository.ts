@@ -1,0 +1,7 @@
+import type { SQLiteDatabase } from 'expo-sqlite';
+import type { LocalExpenseReceiptRecord } from './types';
+import { createClientUuid } from './expense-repository';
+const now=()=>new Date().toISOString();
+export async function addLocalReceipt(db:SQLiteDatabase,input:{userId:string;expenseId:string;localUri:string}):Promise<LocalExpenseReceiptRecord>{const expense=await db.getFirstAsync<{id:string}>('SELECT id FROM expenses WHERE id=? AND userId=? AND deletedAt IS NULL',input.expenseId,input.userId);if(!expense)throw new Error('Local expense not found.');const receipt:LocalExpenseReceiptRecord={id:createClientUuid(),userId:input.userId,expenseId:input.expenseId,localUri:input.localUri,capturedAt:now(),deletedAt:null};await db.runAsync('INSERT INTO expense_receipts (id,userId,expenseId,localUri,capturedAt,deletedAt) VALUES (?,?,?,?,?,?)',receipt.id,receipt.userId,receipt.expenseId,receipt.localUri,receipt.capturedAt,null);return receipt;}
+export const listLocalReceipts=(db:SQLiteDatabase,userId:string,expenseId:string)=>db.getAllAsync<LocalExpenseReceiptRecord>('SELECT * FROM expense_receipts WHERE userId=? AND expenseId=? AND deletedAt IS NULL ORDER BY capturedAt DESC',userId,expenseId);
+export async function deleteLocalReceipt(db:SQLiteDatabase,input:{userId:string;receiptId:string}){const result=await db.runAsync('UPDATE expense_receipts SET deletedAt=? WHERE id=? AND userId=? AND deletedAt IS NULL',now(),input.receiptId,input.userId);if(result.changes!==1)throw new Error('Receipt not found.');}

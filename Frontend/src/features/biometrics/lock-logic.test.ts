@@ -1,0 +1,3 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { canStartPrompt,resolvePrompt,shouldLockOnActive } from './lock-logic';
+test('locks only after backgrounding an enabled unlocked session',()=>{assert.equal(shouldLockOnActive(true,true,'unlocked'),true);assert.equal(shouldLockOnActive(false,true,'unlocked'),false);assert.equal(shouldLockOnActive(true,false,'unlocked'),false);});
+test('prevents duplicate prompts and ignores stale authentication results',()=>{assert.equal(canStartPrompt('locked'),true);assert.equal(canStartPrompt('prompting'),false);assert.equal(resolvePrompt(1,2,true),null);assert.equal(resolvePrompt(2,2,true),'unlocked');assert.equal(resolvePrompt(2,2,false),'locked');});

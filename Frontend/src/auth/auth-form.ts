@@ -1,0 +1,1 @@
+export function validateAuthForm(mode:'login'|'register',input:{name:string;email:string;password:string}):string|null{if(mode==='register'&&!input.name.trim())return 'Enter your name.';if(!input.email.trim())return 'Enter your email.';if(input.password.length<6)return 'Password must be at least 6 characters.';return null;}

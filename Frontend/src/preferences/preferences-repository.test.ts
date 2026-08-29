@@ -1,0 +1,4 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { loadPreferences, savePreferences } from './preferences-repository';
+test('persists user-scoped currency, decimal, and biometric preferences',async()=>{let row:any=null;const db:any={getFirstAsync:async()=>row,runAsync:async(_sql:string,userId:string,currency:string,decimals:number,biometric:number,updatedAt:string)=>{row={userId,defaultCurrency:currency,showDecimalPlaces:decimals,biometricLockEnabled:biometric,updatedAt};}};const defaults=await loadPreferences(db,'u1');assert.equal(defaults.biometricLockEnabled,false);await savePreferences(db,{...defaults,defaultCurrency:'EUR',showDecimalPlaces:false,biometricLockEnabled:true});assert.deepEqual(await loadPreferences(db,'u1'),{...defaults,defaultCurrency:'EUR',showDecimalPlaces:false,biometricLockEnabled:true});});

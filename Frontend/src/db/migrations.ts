@@ -8,5 +8,14 @@ CREATE TABLE IF NOT EXISTS sync_queue (operationId TEXT PRIMARY KEY,entityType T
 CREATE TABLE IF NOT EXISTS app_metadata (key TEXT PRIMARY KEY,value TEXT NOT NULL,updatedAt TEXT NOT NULL);` },{ version:2, sql:`
 CREATE TABLE IF NOT EXISTS sync_conflicts (id TEXT PRIMARY KEY,operationId TEXT NOT NULL,entityType TEXT NOT NULL,entityId TEXT NOT NULL,localPayloadJson TEXT NOT NULL,serverPayloadJson TEXT NOT NULL,createdAt TEXT NOT NULL,resolvedAt TEXT);
 CREATE INDEX IF NOT EXISTS sync_queue_status_nextAttemptAt_idx ON sync_queue(status,nextAttemptAt,createdAt);
-CREATE INDEX IF NOT EXISTS sync_conflicts_entity_idx ON sync_conflicts(entityType,entityId,createdAt DESC);` }];
+CREATE INDEX IF NOT EXISTS sync_conflicts_entity_idx ON sync_conflicts(entityType,entityId,createdAt DESC);` },{ version:3, sql:`
+CREATE TABLE IF NOT EXISTS user_preferences (userId TEXT PRIMARY KEY,defaultCurrency TEXT NOT NULL DEFAULT 'PKR',showDecimalPlaces INTEGER NOT NULL DEFAULT 1,updatedAt TEXT NOT NULL);` },{ version:4, sql:`
+CREATE TABLE IF NOT EXISTS expense_receipts (id TEXT PRIMARY KEY,userId TEXT NOT NULL,expenseId TEXT NOT NULL,localUri TEXT NOT NULL,capturedAt TEXT NOT NULL,deletedAt TEXT);
+CREATE INDEX IF NOT EXISTS expense_receipts_userId_idx ON expense_receipts(userId);
+CREATE INDEX IF NOT EXISTS expense_receipts_expenseId_idx ON expense_receipts(expenseId);` },{ version:5, sql:`
+ALTER TABLE user_preferences ADD COLUMN biometricLockEnabled INTEGER NOT NULL DEFAULT 0;` },{ version:6, sql:`
+CREATE TABLE IF NOT EXISTS recurring_expenses (id TEXT PRIMARY KEY,userId TEXT NOT NULL,title TEXT NOT NULL,amountMinor INTEGER NOT NULL,currency TEXT NOT NULL,categoryId TEXT,frequency TEXT NOT NULL,nextDueAt TEXT NOT NULL,enabled INTEGER NOT NULL,notificationId TEXT,createdAt TEXT NOT NULL,updatedAt TEXT NOT NULL,deletedAt TEXT);
+CREATE INDEX IF NOT EXISTS recurring_expenses_userId_idx ON recurring_expenses(userId);
+CREATE INDEX IF NOT EXISTS recurring_expenses_nextDueAt_idx ON recurring_expenses(nextDueAt);
+CREATE INDEX IF NOT EXISTS recurring_expenses_enabled_idx ON recurring_expenses(enabled);` }];
 export function migrationsAfter(version:number,migrations=databaseMigrations):DatabaseMigration[]{return [...migrations].filter(m=>m.version>version).sort((a,b)=>a.version-b.version);}

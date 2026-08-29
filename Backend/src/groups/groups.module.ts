@@ -4,5 +4,7 @@ import { GroupsController } from './groups.controller';
 import { GroupsService } from './groups.service';
 import { GroupExpensesController } from './group-expenses.controller';
 import { GroupExpensesService } from './group-expenses.service';
-@Module({controllers:[GroupsController,GroupExpensesController],providers:[GroupsService,GroupExpensesService,PrismaService]})
+import { GroupSettlementsController } from './group-settlements.controller';
+import { GroupSettlementsService } from './group-settlements.service';
+@Module({controllers:[GroupsController,GroupExpensesController,GroupSettlementsController],providers:[GroupsService,GroupExpensesService,GroupSettlementsService,PrismaService]})
 export class GroupsModule {}

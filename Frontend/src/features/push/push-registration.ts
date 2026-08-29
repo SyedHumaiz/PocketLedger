@@ -1,0 +1,6 @@
+import * as Notifications from 'expo-notifications'; import Constants from 'expo-constants'; import { Platform } from 'react-native'; import type { DevicePlatform } from '../../api/notification-device-service';
+export type PermissionState='granted'|'denied'|'restricted'|'undetermined';
+export const platformFor=(value=Platform.OS):DevicePlatform=>value==='ios'?'ios':value==='android'?'android':'web';
+export async function notificationPermissionState():Promise<PermissionState>{const status=(await Notifications.getPermissionsAsync()).status;return status==='granted'?'granted':status==='denied'?'denied':status==='undetermined'?'undetermined':'restricted';}
+export async function requestPushPermission():Promise<PermissionState>{const current=await notificationPermissionState();if(current==='granted'||current==='restricted')return current;const status=(await Notifications.requestPermissionsAsync()).status;return status==='granted'?'granted':status==='denied'?'denied':'restricted';}
+export async function expoPushToken():Promise<string|null>{if(Platform.OS==='web')return null;const projectId=Constants.expoConfig?.extra?.eas?.projectId as string|undefined;if(!projectId)return null;try{return (await Notifications.getExpoPushTokenAsync({projectId})).data||null;}catch{return null;}}

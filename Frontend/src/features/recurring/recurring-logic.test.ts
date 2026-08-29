@@ -1,0 +1,3 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { nextDueDate,validateRecurringForm } from './recurring-logic';
+test('validates recurring major-unit input and frequency',()=>{const value=validateRecurringForm({title:'Rent',amount:'20.50',currency:'PKR',frequency:'MONTHLY',nextDueAt:'2026-09-01T09:00:00Z'});assert.equal(value.value?.amountMinor,2050);assert.match(validateRecurringForm({title:'Rent',amount:'20.123',currency:'PKR',frequency:'DAILY',nextDueAt:'2026-09-01'}).error??'',/two decimal/);});
+test('calculates next due date deterministically',()=>assert.equal(nextDueDate('2026-09-01T00:00:00.000Z','WEEKLY'),'2026-09-08T00:00:00.000Z'));

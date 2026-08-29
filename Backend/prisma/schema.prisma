@@ -25,6 +25,7 @@ model User {
   expenseShares       ExpenseShare[]       @relation("ExpenseShareUser")
   settlementsSent     Settlement[]         @relation("SettlementFromUser")
   settlementsReceived Settlement[]         @relation("SettlementToUser")
+  notificationDevices NotificationDevice[] @relation("UserNotificationDevices")
 
   @@index([updatedAt])
 }
@@ -172,6 +173,21 @@ model Budget {
   @@index([userId])
   @@index([categoryId])
   @@index([updatedAt])
+}
+
+model NotificationDevice {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  pushToken  String   @unique @db.VarChar(512)
+  platform   String   @db.VarChar(16)
+  enabled    Boolean  @default(true)
+  lastSeenAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation("UserNotificationDevices", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([enabled])
 }
 
 // Ownership checks are mandatory in the service layer: before creating or

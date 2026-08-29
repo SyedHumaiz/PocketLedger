@@ -1,0 +1,12 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { validateAuthForm } from '../../auth/auth-form';
+import { majorToMinor, formatMinor, totalsByCurrency } from './amount';
+import { supportedCurrencies } from '../../preferences/preferences-repository';
+import { navigationIcons } from '../../ui/navigation-icons';
+test('converts major-unit inputs exactly to minor units',()=>{assert.equal(majorToMinor('20'),2000);assert.equal(majorToMinor('20.50'),2050);assert.throws(()=>majorToMinor('20.555'));});
+test('formats decimals according to preference',()=>{assert.equal(formatMinor(2000,'PKR',true),'PKR 20.00');assert.equal(formatMinor(2000,'PKR',false),'PKR 20');});
+test('keeps mixed currency totals separate',()=>assert.deepEqual(totalsByCurrency([{currency:'PKR',amountMinor:2000},{currency:'USD',amountMinor:500},{currency:'PKR',amountMinor:100}]),[{currency:'PKR',amountMinor:2100},{currency:'USD',amountMinor:500}]));
+test('exposes persistent preference currency options',()=>assert.deepEqual(supportedCurrencies,['PKR','USD','EUR','GBP','AED','SAR']));
+test('validates separate auth modes',()=>{assert.equal(validateAuthForm('login',{name:'',email:'a',password:'secret'}),null);assert.equal(validateAuthForm('register',{name:'',email:'a',password:'secret'}),'Enter your name.');});
+test('maps every tab to a valid icon name',()=>assert.deepEqual(navigationIcons,{home:'home',expenses:'receipt',groups:'people',budgets:'pie-chart',categories:'list',settings:'settings'}));

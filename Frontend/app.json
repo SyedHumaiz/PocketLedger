@@ -9,7 +9,9 @@
     "plugins": [
       "expo-router",
       "expo-sqlite",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-notifications",
+      ["expo-camera", { "cameraPermission": "Allow PocketLedger to capture receipt photos." }]
     ],
     "experiments": {
       "typedRoutes": true

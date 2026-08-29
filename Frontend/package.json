@@ -12,11 +12,15 @@
     "test": "tsx --test src/**/*.test.ts"
   },
   "dependencies": {
+    "@expo/vector-icons": "^15.0.3",
     "@react-native-community/netinfo": "11.4.1",
     "axios": "1.8.4",
     "expo": "~54.0.0",
+    "expo-camera": "~17.0.10",
     "expo-constants": "~18.0.14",
     "expo-linking": "~8.0.12",
+    "expo-local-authentication": "~17.0.9",
+    "expo-notifications": "~0.32.17",
     "expo-router": "~6.0.14",
     "expo-secure-store": "~15.0.8",
     "expo-sqlite": "~16.0.10",
