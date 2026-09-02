@@ -2,7 +2,7 @@ import NetInfo from '@react-native-community/netinfo';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, FlatList, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native'; import { SafeAreaView } from 'react-native-safe-area-context';
 import { deleteBudget } from '../../../src/api/budget-service'; import { useAuthStore } from '../../../src/auth/auth-store';
 import { listLocalBudgets, removeLocalBudget, type LocalBudgetWithCategory } from '../../../src/db/budget-repository'; import { getDatabase } from '../../../src/db/database'; import { listActiveExpenses } from '../../../src/db/expense-repository'; import type { LocalExpenseRecord } from '../../../src/db/types';
 import { budgetMutationError } from '../../../src/features/budgets/budget-errors'; import { budgetProgress, isOverBudget, remainingAmount, spendingForBudget } from '../../../src/features/budgets/budget-logic'; import { formatMinor } from '../../../src/features/currency/amount'; import { usePreferencesStore } from '../../../src/preferences/preferences-store'; import { AppButton, Card, IconAction, OfflineNotice, StateMessage } from '../../../src/ui/components'; import { colors, screen, spacing } from '../../../src/ui/theme';

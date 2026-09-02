@@ -1,7 +1,7 @@
 import NetInfo from '@react-native-community/netinfo';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, TextInput, View } from 'react-native'; import { SafeAreaView } from 'react-native-safe-area-context';
 import { createGroup } from '../../../src/api/group-service';
 import { AppButton, Card } from '../../../src/ui/components';
 import { colors, radius, screen, spacing } from '../../../src/ui/theme';

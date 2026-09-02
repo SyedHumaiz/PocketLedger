@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, FlatList, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native'; import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../../src/auth/auth-store';
 import { getDatabase } from '../../../src/db/database';
 import { listActiveExpenses, softDeleteExpense } from '../../../src/db/expense-repository';

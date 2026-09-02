@@ -1,7 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import { Redirect } from 'expo-router';
 import { useRef, useState } from 'react';
-import { KeyboardAvoidingView, Platform, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, StyleSheet, Text, View } from 'react-native'; import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../src/auth/auth-store';
 import { AppButton, Card, FormInput, StateMessage } from '../src/ui/components';
 import { colors, screen, spacing } from '../src/ui/theme';

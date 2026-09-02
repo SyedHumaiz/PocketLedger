@@ -1,7 +1,7 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import NetInfo from '@react-native-community/netinfo';
 import { useCallback, useState } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'; import { SafeAreaView } from 'react-native-safe-area-context';
 import { createBudget } from '../../../src/api/budget-service';
 import { mapBudgetResponse } from '../../../src/api/budget-mapping';
 import { useAuthStore } from '../../../src/auth/auth-store';

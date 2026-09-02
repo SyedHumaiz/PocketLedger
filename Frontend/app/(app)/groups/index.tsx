@@ -1,7 +1,7 @@
 import NetInfo from '@react-native-community/netinfo';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { FlatList, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native'; import { SafeAreaView } from 'react-native-safe-area-context';
 import { getGroups, type Group } from '../../../src/api/group-service';
 import { AppButton, Card, OfflineNotice, StateMessage } from '../../../src/ui/components';
 import { colors, screen, spacing } from '../../../src/ui/theme';
