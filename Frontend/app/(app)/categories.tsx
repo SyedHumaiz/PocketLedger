@@ -1,7 +1,7 @@
 import NetInfo from '@react-native-community/netinfo';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, FlatList, Modal, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, Modal, StyleSheet, Text, View } from 'react-native'; import { SafeAreaView } from 'react-native-safe-area-context';
 import { createCategory, deleteCategory, updateCategory } from '../../src/api/category-service';
 import { mapCategoryResponse } from '../../src/api/category-mapping';
 import { useAuthStore } from '../../src/auth/auth-store';
