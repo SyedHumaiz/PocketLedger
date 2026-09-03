@@ -1,0 +1,6 @@
+import type { LocalCategoryRecord, SyncConflictRecord } from '../../db/types';
+import { expenseConflictSnapshot } from '../../db/conflict-repository';
+import { formatMinor } from '../currency/amount';
+
+export interface ExpenseConflictViewModel { id:string; description:string; expenseDate:string; local:{version:number;amount:string;category:string;description:string}; server:{version:number;amount:string;category:string;description:string}; }
+export function expenseConflictViewModel(conflict:SyncConflictRecord,categories:readonly LocalCategoryRecord[],showDecimalPlaces:boolean):ExpenseConflictViewModel{const {local,server}=expenseConflictSnapshot(conflict);const names=new Map(categories.map(category=>[category.id,category.name]));const category=(id:string|null)=>id===null?'Uncategorized':names.get(id)??'Unknown category';return {id:conflict.id,description:local.description||server.description,expenseDate:local.expenseDate||server.expenseDate.slice(0,10),local:{version:local.version,amount:formatMinor(local.amountMinor,local.currency,showDecimalPlaces),category:category(local.categoryId),description:local.description},server:{version:server.version,amount:formatMinor(server.amountMinor,server.currency,showDecimalPlaces),category:category(server.categoryId),description:server.description}};}
