@@ -1,0 +1,4 @@
+import assert from 'node:assert/strict'; import test from 'node:test'; import { calculateLocalGroupBalances,localSettlementSuggestions } from './local-group-balances';
+test('includes pending expenses and excludes soft deletes',()=>assert.deepEqual(calculateLocalGroupBalances([{id:'a',currency:'USD',paidByUserId:'a',amountMinor:100,shares:[{userId:'b',amountMinor:100}],syncStatus:'PENDING'},{id:'d',currency:'USD',paidByUserId:'a',amountMinor:50,shares:[],deletedAt:'x'}],[]),{USD:{a:100,b:-100}}));
+test('applies settlements and keeps currencies separate',()=>assert.deepEqual(calculateLocalGroupBalances([{id:'a',currency:'USD',paidByUserId:'a',amountMinor:100,shares:[{userId:'b',amountMinor:100}]}],[{fromUserId:'b',toUserId:'a',amountMinor:40}]),{USD:{a:100,b:-100},DEFAULT:{b:40,a:-40}}));
+test('generates deterministic suggestions',()=>assert.deepEqual(localSettlementSuggestions({USD:{b:-50,a:50}}),[{currency:'USD',fromUserId:'b',toUserId:'a',amountMinor:50}]));

@@ -33,5 +33,8 @@ CREATE TABLE IF NOT EXISTS cached_settlements (id TEXT NOT NULL,groupId TEXT NOT
 CREATE TABLE IF NOT EXISTS cached_group_balances (groupId TEXT NOT NULL,userId TEXT NOT NULL,balanceUserId TEXT NOT NULL,payloadJson TEXT NOT NULL,PRIMARY KEY(groupId,userId,balanceUserId));
 CREATE TABLE IF NOT EXISTS cached_settlement_suggestions (groupId TEXT NOT NULL,userId TEXT NOT NULL,position INTEGER NOT NULL,payloadJson TEXT NOT NULL,PRIMARY KEY(groupId,userId,position));
 CREATE TABLE IF NOT EXISTS group_cache_metadata (groupId TEXT NOT NULL,userId TEXT NOT NULL,refreshedAt TEXT NOT NULL,PRIMARY KEY(groupId,userId));
-CREATE INDEX IF NOT EXISTS cached_groups_userId_idx ON cached_groups(userId);` }];
+CREATE INDEX IF NOT EXISTS cached_groups_userId_idx ON cached_groups(userId);` },{ version:9, sql:`
+ALTER TABLE cached_group_expenses ADD COLUMN version INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE cached_group_expenses ADD COLUMN deletedAt TEXT;
+ALTER TABLE cached_group_expenses ADD COLUMN syncStatus TEXT NOT NULL DEFAULT 'SYNCED';` }];
 export function migrationsAfter(version:number,migrations=databaseMigrations):DatabaseMigration[]{return [...migrations].filter(m=>m.version>version).sort((a,b)=>a.version-b.version);}

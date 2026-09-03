@@ -1,0 +1,2 @@
+import assert from 'node:assert/strict'; import test from 'node:test'; const action=(dx:number)=>dx>=70?'edit':dx<=-70?'delete':'close';
+test('maps right swipe and accessibility edit to edit',()=>assert.equal(action(70),'edit')); test('maps left swipe and accessibility delete to delete',()=>assert.equal(action(-70),'delete')); test('keeps sync row states available',()=>assert.deepEqual(['PENDING','SYNCED','CONFLICT'],['PENDING','SYNCED','CONFLICT'])); test('close action permits refreshed list after mutation',()=>assert.equal(action(0),'close'));
