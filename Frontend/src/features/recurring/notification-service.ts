@@ -27,7 +27,7 @@ export async function scheduleRecurringReminder(item: LocalRecurringExpenseRecor
       : item.frequency === 'WEEKLY'
         ? { type: notifications.SchedulableTriggerInputTypes.WEEKLY, weekday: due.getDay() + 1, hour: due.getHours(), minute: due.getMinutes() }
         : { type: notifications.SchedulableTriggerInputTypes.MONTHLY, day: due.getDate(), hour: due.getHours(), minute: due.getMinutes() };
-    return await notifications.scheduleNotificationAsync({ content: { title: 'Recurring expense reminder', body: `${item.title} · ${formatMinor(item.amountMinor, item.currency)}` }, trigger: trigger as never });
+    return await notifications.scheduleNotificationAsync({ content: { title: 'Recurring expense reminder', body: `${item.title} · ${formatMinor(item.amountMinor, item.currency)}`, data:{type:'recurring-reminder'} }, trigger: trigger as never });
   } catch { return null; }
 }
 

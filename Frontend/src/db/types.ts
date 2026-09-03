@@ -3,7 +3,8 @@ export type SyncQueueStatus = SyncStatus | 'PROCESSING' | 'CONFLICT';
 export type SyncOperationType = 'CREATE' | 'UPDATE' | 'DELETE';
 export interface LocalCategoryRecord { id:string; userId:string; name:string; normalizedName:string; createdAt:string; updatedAt:string; deletedAt:string|null; syncStatus:SyncStatus; }
 export interface LocalExpenseRecord { id:string; userId:string; categoryId:string|null; amountMinor:number; currency:string; description:string; expenseDate:string; createdAt:string; updatedAt:string; version:number; deletedAt:string|null; syncStatus:SyncStatus; }
-export interface LocalExpenseReceiptRecord { id:string; userId:string; expenseId:string; localUri:string; capturedAt:string; deletedAt:string|null; }
+export type ReceiptSyncStatus='PENDING'|'UPLOADING'|'SYNCED'|'FAILED';
+export interface LocalExpenseReceiptRecord { id:string; userId:string; expenseId:string; localUri:string; capturedAt:string; deletedAt:string|null; syncStatus:ReceiptSyncStatus; remoteReceiptId:string|null; attempts:number; lastError:string|null; updatedAt:string; }
 export type RecurringFrequency='DAILY'|'WEEKLY'|'MONTHLY';
 export interface LocalRecurringExpenseRecord { id:string; userId:string; title:string; amountMinor:number; currency:string; categoryId:string|null; frequency:RecurringFrequency; nextDueAt:string; enabled:number; notificationId:string|null; createdAt:string; updatedAt:string; deletedAt:string|null; }
 export interface LocalBudgetRecord { id:string; userId:string; categoryId:string|null; amountMinor:number; month:number; year:number; createdAt:string; updatedAt:string; deletedAt:string|null; syncStatus:SyncStatus; }

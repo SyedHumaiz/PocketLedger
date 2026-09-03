@@ -1,0 +1,3 @@
+import assert from 'node:assert/strict'; import test from 'node:test'; import { cachedGroupView,replaceCachedItems } from './group-cache-core';
+test('replaces duplicate cached records without cross-user mixing',()=>{const userOne=replaceCachedItems([{id:'g1',name:'old'}],[{id:'g1',name:'new'}]);const userTwo=replaceCachedItems([{id:'g1',name:'other'}],[]);assert.deepEqual(userOne,[{id:'g1',name:'new'}]);assert.deepEqual(userTwo,[{id:'g1',name:'other'}]);});
+test('preserves a cached group view while offline',()=>assert.deepEqual(cachedGroupView({id:'g1'},false),{data:{id:'g1'},source:'cache'}));

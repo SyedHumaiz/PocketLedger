@@ -1,3 +1,5 @@
 import assert from 'node:assert/strict'; import test from 'node:test'; import { databaseMigrations, migrationsAfter } from './migrations';
 test('orders pending migrations',()=>assert.deepEqual(migrationsAfter(1,[{version:3,sql:''},{version:1,sql:''},{version:2,sql:''}]).map(x=>x.version),[2,3]));
 test('adds sync conflicts in migration 2',()=>{const migration=databaseMigrations.find(item=>item.version===2);assert.match(migration?.sql??'',/CREATE TABLE IF NOT EXISTS sync_conflicts/);});
+test('adds receipt upload state in migration 7',()=>{const sql=databaseMigrations.find(item=>item.version===7)?.sql??'';for(const column of ['syncStatus','remoteReceiptId','attempts','lastError','updatedAt'])assert.match(sql,new RegExp(`ADD COLUMN ${column}`));});
+test('adds user-scoped group cache tables in migration 8',()=>{const sql=databaseMigrations.find(item=>item.version===8)?.sql??'';for(const table of ['cached_groups','cached_group_members','cached_group_expenses','cached_group_shares','cached_settlements','cached_group_balances','cached_settlement_suggestions','group_cache_metadata'])assert.match(sql,new RegExp(table));});

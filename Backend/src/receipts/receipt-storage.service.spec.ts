@@ -1,0 +1,2 @@
+import { LocalReceiptStorageService } from './receipt-storage.service';
+describe('LocalReceiptStorageService',()=>{it('rejects traversal and non-server-controlled storage keys before file access',async()=>{const storage=new LocalReceiptStorageService();await expect(storage.save('../receipt.png',Buffer.from('x'))).rejects.toThrow('Invalid receipt storage key.');await expect(storage.open('user/expense/../../secret.jpg')).rejects.toThrow('Invalid receipt storage key.');});});

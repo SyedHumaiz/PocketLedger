@@ -1,0 +1,8 @@
+import NetInfo from '@react-native-community/netinfo';
+import { useEffect,useRef } from 'react';
+import { getGroup,getGroupBalances,getGroupExpenses,getGroups,getSettlementSuggestions,getSettlements } from '../api/group-service';
+import { getDatabase } from '../db/database';
+import { replaceCachedGroupDetail,replaceCachedGroups } from '../db/group-cache-repository';
+let refreshing:Promise<void>|null=null;
+export function refreshGroupCache(userId:string):Promise<void>{if(refreshing)return refreshing;refreshing=(async()=>{const groups=await getGroups(),db=await getDatabase();await replaceCachedGroups(db,userId,groups);for(const summary of groups){const [group,expenses,balances,suggestions,settlements]=await Promise.all([getGroup(summary.id),getGroupExpenses(summary.id),getGroupBalances(summary.id),getSettlementSuggestions(summary.id),getSettlements(summary.id)]);await replaceCachedGroupDetail(db,userId,group,expenses,balances,suggestions,settlements);}})().finally(()=>{refreshing=null;});return refreshing;}
+export function useGroupCache(isLoading:boolean,isAuthenticated:boolean,userId:string|undefined):void{const active=useRef(false);useEffect(()=>{if(isLoading||!isAuthenticated||!userId||active.current)return;active.current=true;const refresh=()=>void refreshGroupCache(userId).catch(()=>undefined);const unsubscribe=NetInfo.addEventListener(state=>{if(state.isConnected!==false&&state.isInternetReachable!==false)refresh();});void NetInfo.fetch().then(state=>{if(state.isConnected!==false&&state.isInternetReachable!==false)refresh();}).catch(()=>undefined);return()=>{active.current=false;unsubscribe();};},[isLoading,isAuthenticated,userId]);}

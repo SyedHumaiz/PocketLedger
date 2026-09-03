@@ -4,6 +4,7 @@
 **/*.tsbuildinfo
 **/.expo/
 **/.expo-shared/
+Backend/uploads/
 
 # Environment files
 **/.env

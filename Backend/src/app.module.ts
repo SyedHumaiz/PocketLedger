@@ -8,9 +8,10 @@ import { SyncModule } from './sync/sync.module';
 import { HealthController } from './health.controller';
 import { GroupsModule } from './groups/groups.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { ReceiptsModule } from './receipts/receipts.module';
 
 @Module({
-  imports: [AuthModule, CategoriesModule, ExpensesModule, BudgetsModule, SyncModule, GroupsModule, NotificationsModule],
+  imports: [AuthModule, CategoriesModule, ExpensesModule, BudgetsModule, SyncModule, GroupsModule, NotificationsModule, ReceiptsModule],
   controllers: [HealthController],
 })
 export class AppModule {}
